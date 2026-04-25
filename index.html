@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tic Tac Toe Premium</title>
+    <style>
+        /* --- RESET E CORES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent-blue: #38bdf8;
+            --accent-pink: #f472b6;
+            --text: #f1f5f9;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- BANNER SUPERIOR --- */
+        .top-ad-banner {
+            width: 100%;
+            background: #1e293b;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #334155;
+            z-index: 10;
+        }
+
+        .top-ad-banner .info { display: flex; align-items: center; gap: 10px; }
+        .top-ad-banner .icon { font-size: 1.5rem; background: #334155; padding: 5px; border-radius: 8px; }
+        
+        .top-install-btn {
+            background: var(--accent-blue);
+            color: #0f172a;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        /* --- POPUP DE ENTRADA (MODAL) --- */
+        #modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            display: flex; /* Começa visível */
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none; /* Só ativa quando aparecer */
+        }
+
+        #modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-card {
+            background: var(--card);
+            width: 85%;
+            max-width: 400px;
+            padding: 30px;
+            border-radius: 25px;
+            text-align: center;
+            border: 1px solid #334155;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transform: scale(0.5);
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+
+        .modal-card h2 { color: var(--accent-blue); margin-bottom: 15px; font-size: 1.5rem; }
+        .modal-card p { color: #94a3b8; margin-bottom: 25px; }
+
+        .btn-link {
+            display: block;
+            background: linear-gradient(135deg, var(--accent-pink), #be185d);
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(244, 114, 182, 0.3);
+        }
+
+        #timer-text { font-size: 0.9rem; color: #64748b; }
+        #close-modal-btn {
+            display: none;
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* --- TABULEIRO DO JOGO --- */
+        .game-title { margin: 30px 0 20px; letter-spacing: 3px; color: #94a3b8; font-size: 1.2rem; }
+        
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 90vw;
+            max-width: 350px;
+            aspect-ratio: 1/1;
+        }
+
+        .cell {
+            background: var(--card);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid #334155;
+            transition: 0.2s;
+        }
+
+        .cell:active { transform: scale(0.95); }
+        .cell.x { color: var(--accent-blue); }
+        .cell.o { color: var(--accent-pink); }
+
+        .status { margin: 20px 0; font-size: 1.1rem; }
+        .reset-btn {
+            background: transparent;
+            border: 2px solid var(--accent-blue);
+            color: var(--accent-blue);
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="modal-overlay">
+        <div class="modal-card">
+            <div style="font-size: 3rem; margin-bottom: 15px;">🎁</div>
+            <h2>OFERTA VIP</h2>
+            <p>Garanta acesso exclusivo ao nosso produto selecionado com um preço imperdível!</p>
+            
+            <a href="https://meli.la/19ug4W5" target="_blank" class="btn-link">Ver Produto Agora</a>
+
+            <div id="footer-modal">
+                <span id="timer-text">Você pode pular em <b id="seconds">5</b>s</span>
+                <button id="close-modal-btn" onclick="fecharPopup()">Começar a Jogar ✕</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="top-ad-banner">
+        <div class="info">
+            <span class="icon">🕹️</span>
+            <strong>Meli Arcade</strong>
+        </div>
+        <a href="https://meli.la/19ug4W5" target="_blank" class="top-install-btn">LOJA OFICIAL</a>
+    </div>
+
+    <h1 class="game-title">JOGO DA VELHA</h1>
+
+    <div class="board" id="board">
+        <div class="cell" data-i="0"></div>
+        <div class="cell" data-i="1"></div>
+        <div class="cell" data-i="2"></div>
+        <div class="cell" data-i="3"></div>
+        <div class="cell" data-i="4"></div>
+        <div class="cell" data-i="5"></div>
+        <div class="cell" data-i="6"></div>
+        <div class="cell" data-i="7"></div>
+        <div class="cell" data-i="8"></div>
+    </div>
+
+    <div class="status" id="status">Vez do Jogador: X</div>
+    <button class="reset-btn" onclick="resetar()">REINICIAR</button>
+
+    <script>
+        // --- Lógica do Popup ---
+        const overlay = document.getElementById('modal-overlay');
+        const secondsEl = document.getElementById('seconds');
+        const timerText = document.getElementById('timer-text');
+        const closeBtn = document.getElementById('close-modal-btn');
+
+        // Mostra o popup assim que carrega
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                overlay.classList.add('active');
+                let count = 5;
+                const timer = setInterval(() => {
+                    count--;
+                    secondsEl.innerText = count;
+                    if(count <= 0) {
+                        clearInterval(timer);
+                        timerText.style.display = 'none';
+                        closeBtn.style.display = 'inline-block';
+                    }
+                }, 1000);
+            }, 100);
+        });
+
+        function fecharPopup() {
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.style.display = 'none', 500);
+        }
+
+        // --- Lógica do Jogo ---
+        let jogador = "X";
+        let jogoAtivo = true;
+        let estado = ["", "", "", "", "", "", "", "", ""];
+        const statusTxt = document.getElementById('status');
+        const cells = document.querySelectorAll('.cell');
+
+        const vitorias = [
+            [0,1,2], [3,4,5], [6,7,8],
+            [0,3,6], [1,4,7], [2,5,8],
+            [0,4,8], [2,4,6]
+        ];
+
+        cells.forEach(cell => {
+            cell.addEventListener('click', () => {
+                const i = cell.getAttribute('data-i');
+                if(estado[i] !== "" || !jogoAtivo) return;
+
+                estado[i] = jogador;
+                cell.innerText = jogador;
+                cell.classList.add(jogador.toLowerCase());
+
+                if(checarVitoria()) {
+                    statusTxt.innerHTML = `Jogador <b style="color:var(--accent-${jogador === 'X' ? 'blue' : 'pink'})">${jogador}</b> venceu!`;
+                    jogoAtivo = false;
+                } else if(!estado.includes("")) {
+                    statusTxt.innerText = "Empate!";
+                    jogoAtivo = false;
+                } else {
+                    jogador = jogador === "X" ? "O" : "X";
+                    statusTxt.innerText = `Vez do Jogador: ${jogador}`;
+                }
+            });
+        });
+
+        function checarVitoria() {
+            return vitorias.some(p => {
+                return p.every(i => estado[i] === jogador);
+            });
+        }
+
+        function resetar() {
+            jogador = "X";
+            jogoAtivo = true;
+            estado = ["", "", "", "", "", "", "", "", ""];
+            statusTxt.innerText = "Vez do Jogador: X";
+            cells.forEach(c => {
+                c.innerText = "";
+                c.classList.remove('x', 'o');
+            });
+        }
+    </script>
+</body>
+</html>
